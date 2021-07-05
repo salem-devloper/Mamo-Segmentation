@@ -24,10 +24,10 @@ class QataCovDataset(Dataset): # inherit from torch.utils.data.Dataset
         self.split = split # train / val / test
         self.transforms = transforms
 
-        self.image_path = self.root_dir + '/Images/'
+        self.image_path = self.root_dir + '/Train_FULL/Train_FULL/'
 
         # target
-        self.mask_path = os.path.join(self.root_dir,'Ground-truths')
+        self.mask_path = os.path.join(self.root_dir,'Train_MASK-20210611T203337Z-001/Train_MASK')
         
 
     def __len__(self):
