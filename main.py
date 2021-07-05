@@ -202,7 +202,7 @@ def draw_plots(history):
 
 def get_args():
 
-    parser = argparse.ArgumentParser(description = "U-Net for Lung Segmentation" ,
+    parser = argparse.ArgumentParser(description = "Mamo U-net Segmentation" ,
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # set your environment

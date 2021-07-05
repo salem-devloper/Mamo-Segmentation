@@ -13,7 +13,7 @@ from skimage import io
 # torch.utils.data.Dataset is an abstract class representing a dataset
 class LungSegDataset(Dataset): # inherit from torch.utils.data.Dataset
     "Lung sengmentation dataset."
-    def __init__(self,root_dir = os.path.join("../input/clahe-dataset/CLAHE dataset"),split = "train", transforms = None , shuffle = True):
+    def __init__(self,root_dir = os.path.join("../input/mamodataset"),split = "train", transforms = None , shuffle = True):
         """
         Args:
         :param root_dir (str):
@@ -27,21 +27,21 @@ class LungSegDataset(Dataset): # inherit from torch.utils.data.Dataset
         # data
         # train set : CHN
         # test/validation set : MCU
-        self.image_path = self.root_dir + '/Images'
+        self.image_path = self.root_dir + '/Train_FULL/Train_FULL'
         image_file =  os.listdir(self.image_path)
-        self.train_image_file = [fName for fName in image_file if "CHNCXR" in fName]
+        self.train_image_file = [fName for fName in image_file if "LEFT" in fName]
         self.train_image_idx = sorted([int(fName.split("_")[1]) for fName in self.train_image_file])
 
-        self.eval_image_file = [fName for fName in image_file if "MCUCXR" in fName]
+        self.eval_image_file = [fName for fName in image_file if "RIGHT" in fName]
         self.eval_image_idx = sorted([int(fName.split("_")[1]) for fName in self.eval_image_file])
 
         # target
-        self.mask_path = os.path.join(self.root_dir,'Ground-truths')
+        self.mask_path = os.path.join(self.root_dir,'/Train_MASK-20210611T203337Z-001/Train_MASK')
         mask_file = os.listdir(self.mask_path)
-        self.train_mask_file = [fName for fName in mask_file if "CHNCXR" in fName]
+        self.train_mask_file = [fName for fName in mask_file if "LEFT" in fName]
         self.train_mask_idx = sorted([int(fName.split("_")[1]) for fName in self.train_mask_file])
 
-        self.eval_mask_file = [fName for fName in mask_file if "MCUCXR" in fName]
+        self.eval_mask_file = [fName for fName in mask_file if "RIGHT" in fName]
         self.eval_mask_idx = sorted([int(fName.split("_")[1]) for fName in self.eval_mask_file])
 
         # train/ val / test
