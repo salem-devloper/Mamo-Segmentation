@@ -11,9 +11,9 @@ from skimage import io
 
 
 # torch.utils.data.Dataset is an abstract class representing a dataset
-class CovidCTDataset(Dataset): # inherit from torch.utils.data.Dataset
+class QataCovDataset(Dataset): # inherit from torch.utils.data.Dataset
     "Lung sengmentation dataset."
-    def __init__(self,root_dir = os.path.join(os.getcwd(),"data/Lung Segmentation"),split, transforms = None , shuffle = True):
+    def __init__(self,root_dir = os.path.join(os.getcwd(),"data/Lung Segmentation"),split=None, transforms = None , shuffle = True):
         """
         Args:
         :param root_dir (str):
@@ -24,52 +24,11 @@ class CovidCTDataset(Dataset): # inherit from torch.utils.data.Dataset
         self.split = split # train / val / test
         self.transforms = transforms
 
-        # data
-        # train set : CHN
-        # test/validation set : MCU
-        self.image_path = self.root_dir + '/Train_FULL/Train_FULL/'
-        #image_file =  os.listdir(self.image_path)
-        #self.train_image_file = [fName for fName in image_file if "CHNCXR" in fName]
-        #self.train_image_idx = sorted([int(fName.split("_")[1]) for fName in self.train_image_file])
-
-        #self.eval_image_file = [fName for fName in image_file if "MCUCXR" in fName]
-        #self.eval_image_idx = sorted([int(fName.split("_")[1]) for fName in self.eval_image_file])
+        self.image_path = self.root_dir + '/Images/'
 
         # target
-        self.mask_path = os.path.join(self.root_dir,'Train_MASK-20210611T203337Z-001/Train_MASK')
-        #mask_file = os.listdir(self.mask_path)
-        #self.train_mask_file = [fName for fName in mask_file if "CHNCXR" in fName]
-        #self.train_mask_idx = sorted([int(fName.split("_")[1]) for fName in self.train_mask_file])
-
-        #self.eval_mask_file = [fName for fName in mask_file if "MCUCXR" in fName]
-        #self.eval_mask_idx = sorted([int(fName.split("_")[1]) for fName in self.eval_mask_file])
-
-        # train/ val / test
-        # for train set, we use CHN
-        # for test and validation set, we use MCU
-        #self.train_idx = [idx for idx in self.train_image_idx if idx in self.train_mask_idx]
-        #self.eval_idx = [idx for idx in self.eval_image_idx if idx in self.eval_mask_idx]
-        #self.val_idx = self.eval_idx[:int(0.5*len(self.eval_idx))]
-        #self.test_idx = self.eval_idx[int(0.5*len(self.eval_idx)):]
-
-
-
-
-        #self.data_file = {"train"  : {"image":self.train_image_file , "mask": self.train_mask_file},
-        #                   "val"   : {"image":self.eval_image_file  , "mask": self.eval_mask_file },
-        #                   "test"  : {"image":self.eval_image_file  , "mask": self.eval_mask_file}}
-
-        #self.data_idx ={"train" : self.train_idx,
-        #                "val"   : self.val_idx,
-        #                "test"  : self.test_idx}
-
-
-
-        # print("The Total number of data =",len(self.train_idx) + len(self.val_idx) + len(self.test_idx))
-        # print("The Total number of train data =", len(self.train_idx))
-        # print("The Total number of val data =", len(self.val_idx))
-        # print("The Total number of test data =", len(self.test_idx))
-
+        self.mask_path = os.path.join(self.root_dir,'Ground-truths')
+        
 
     def __len__(self):
         return len(self.split)
@@ -82,16 +41,21 @@ class CovidCTDataset(Dataset): # inherit from torch.utils.data.Dataset
         #    if idx == file_idx:
         #        img_fName = fName
         img_path = os.path.join(self.image_path, img_name)
-        img = Image.open(img_path).convert('LA')  # open as PIL Image and set Channel = 1
+        img = Image.open(img_path).convert('L')  # open as PIL Image and set Channel = 1
         # img = cv2.imread(img_path)
 
         #for fName in self.data_file[self.split]["mask"]:
         #    file_idx = int(fName.split('_')[1])
         #    if idx == file_idx:
         #        mask_fName = fName
-        mask_path = os.path.join(self.mask_path, image_path)
-        mask = Image.open(mask_path)  # PIL Image
-        # mask = cv2.imread(mask_path)
+        mask_path = os.path.join(self.mask_path, 'mask_'+img_name)
+
+        img_size = np.array(img).shape
+
+        if os.path.exists(mask_path):
+            mask = Image.open(mask_path).convert('L')  # PIL Image
+        else:
+            mask = Image.fromarray(np.zeros(img_size,dtype=np.uint8))
 
         sample = {'image': img, 'mask': mask}
 

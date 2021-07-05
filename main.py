@@ -1,9 +1,9 @@
+#!/usr/bin/env python3
 import numpy as np
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
-from tqdm import tqdm
-from LungSegmentationDataset import LungSegDataset
+from QataCovDataset import QataCovDataset
 import argparse
 import logging
 import os
@@ -16,6 +16,8 @@ from tqdm import tqdm
 from model.unet import UNet
 import time
 import copy
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 from DiceLoss import DiceLoss
 
 def train_and_validate(net,criterion, optimizer, scheduler, dataloader,device,epochs, load_model = None):
@@ -200,19 +202,21 @@ def draw_plots(history):
     plt.savefig('./loss_plot.png')
     plt.show()
 
+
 def get_args():
 
-    parser = argparse.ArgumentParser(description = "Mamo U-net Segmentation" ,
+    parser = argparse.ArgumentParser(description = "U-Net for Lung Segmentation" ,
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # set your environment
+    parser.add_argument('--path',type=str,default='./data/')
     parser.add_argument('--gpu', type=str, default = '0')
-    parser.add_argument('--n_workers', type =int , default = 4 , help = "The number of workers for dataloader")
+    parser.add_argument('--n_workers', type =int , default = 0 , help = "The number of workers for dataloader")
 
     # arguments for training
-    parser.add_argument('--img_size', type = int , default = 512,)
-    parser.add_argument('--epochs', type=int , default = 100 )
-    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--img_size', type = int , default = 224)
+    parser.add_argument('--epochs', type=int , default=100)
+    parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--lr', type=float, default=0.01)
 
     parser.add_argument('--load_model', type=str, default=None, help='.pth file path to load model')
@@ -238,7 +242,6 @@ def main():
     img_size = args.img_size #default: 512
 
 
-
     # set transforms for dataset
     import torchvision.transforms as transforms
     from my_transforms import RandomHorizontalFlip,RandomVerticalFlip,ColorJitter,GrayScale,Resize,ToTensor
@@ -262,11 +265,20 @@ def main():
         ToTensor()
     ])
 
+    # split data to train_valid_test
+    img_path = os.path.join(args.path,'Train_FULL/Train_FULL')
+    img_list = shuffle(os.listdir(img_path),random_state=42)
+
+    # ToDo : Removing in the real training
+    # img_list = img_list[:1000]
+
+    train_split,test_split = train_test_split(img_list, test_size=0.25, random_state=42)
+    train_split,valid_split = train_test_split(train_split, test_size=0.15, random_state=42)
 
     # set Dataset and DataLoader
-    train_dataset = LungSegDataset(transforms=train_transforms)
-    val_dataset = LungSegDataset(split='val',transforms=eval_transforms)
-    test_dataset = LungSegDataset(split = 'test',transforms=eval_transforms)
+    train_dataset = QataCovDataset(root_dir = args.path,transforms=train_transforms,split=train_split)
+    val_dataset = QataCovDataset(root_dir = args.path,split=valid_split,transforms=eval_transforms)
+    test_dataset = QataCovDataset(root_dir = args.path,split = test_split,transforms=eval_transforms)
 
     from torch.utils.data import DataLoader
     dataloader = {'train' : DataLoader(dataset = train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True),
@@ -295,11 +307,10 @@ def main():
     #     criterion = nn.CrossEntropyLoss()
     # else:
     #     criterion = nn.BCEWithLogitsLoss()
-    criterion = DiceLoss()
     #criterion = nn.BCEWithLogitsLoss()
+    criterion = DiceLoss()
 
     train_and_validate(net=model,criterion=criterion,optimizer=optimizer,dataloader=dataloader,device=device,epochs=args.epochs, scheduler=scheduler,load_model=checkpoint_path)
-    # test()
     test(net=model,criterion=criterion,dataloader=dataloader,device=device)
 
 if __name__ == '__main__':
