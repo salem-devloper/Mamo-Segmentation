@@ -74,9 +74,9 @@ if __name__ == "__main__":
     from my_transforms import Resize, ToTensor, GrayScale
     from torch.utils.data import DataLoader
     # set img size
-    img_size = 512
+    img_size = 224
 
-    scale = Resize(512)
+    scale = Resize(224)
     composed = transforms.Compose([Resize(600),
                                    GrayScale()])
 
